@@ -69,7 +69,7 @@ adversarial_squad = [
 original_squad = load_dataset('squad', split='validation')
 
 # Load the adversarial SQuAD dataset (choose 'AddSent' or 'AddOneSent')
-adversarial_squad = load_dataset('squad_adversarial', 'AddSent', split='validation')
+adversarial_squad = load_dataset('squad_adversarial', 'AddOneSent', split='validation')
 
 # Create a mapping from id to example in the original dataset
 original_squad_dict = {example['id']: example for example in original_squad}
@@ -105,56 +105,29 @@ for example in adversarial_squad:
     id_ = example['id']
     original_example = original_squad_dict.get(id_)
     if original_example:
-        fields = ['title', 'context', 'question']
-        differences_found = False
+        original_context = original_example['context']
+        adversarial_context = example['context']
+
+        # Skip if contexts are identical
+        if original_context == adversarial_context:
+            continue
+
+        # Check if the only difference is whitespace
+        if original_context.strip() == adversarial_context.strip():
+            continue
+
+        # Highlight differences
+        highlighted_original, highlighted_adversarial = highlight_differences(original_context, adversarial_context)
+
         print(f"ID: {id_}")
-        for field in fields:
-            original_value = original_example.get(field, '')
-            adversarial_value = example.get(field, '')
-            if original_value != adversarial_value:
-                highlighted_original, highlighted_adversarial = highlight_differences(original_value, adversarial_value)
-                print(f"\nField: {field}")
-                print("Original:")
-                print(highlighted_original)
-                print("Modified:")
-                print(highlighted_adversarial)
-                differences_found = True
-        # Compare answers
-        original_answers = original_example.get('answers', {})
-        adversarial_answers = example.get('answers', {})
-        # Compare 'text' field in answers
-        original_texts = original_answers.get('text', [])
-        adversarial_texts = adversarial_answers.get('text', [])
-        for idx in range(max(len(original_texts), len(adversarial_texts))):
-            original_text = original_texts[idx] if idx < len(original_texts) else ''
-            adversarial_text = adversarial_texts[idx] if idx < len(adversarial_texts) else ''
-            if original_text != adversarial_text:
-                highlighted_original, highlighted_adversarial = highlight_differences(original_text, adversarial_text)
-                print(f"\nAnswer Text {idx+1}:")
-                print("Original:")
-                print(highlighted_original)
-                print("Modified:")
-                print(highlighted_adversarial)
-                differences_found = True
-        # Compare 'answer_start' field in answers
-        original_starts = original_answers.get('answer_start', [])
-        adversarial_starts = adversarial_answers.get('answer_start', [])
-        for idx in range(max(len(original_starts), len(adversarial_starts))):
-            original_start = str(original_starts[idx]) if idx < len(original_starts) else ''
-            adversarial_start = str(adversarial_starts[idx]) if idx < len(adversarial_starts) else ''
-            if original_start != adversarial_start:
-                highlighted_original, highlighted_adversarial = highlight_differences(original_start, adversarial_start)
-                print(f"\nAnswer Start {idx+1}:")
-                print("Original:")
-                print(highlighted_original)
-                print("Modified:")
-                print(highlighted_adversarial)
-                differences_found = True
-        if differences_found:
-            print("\n" + "="*80 + "\n")
-            diff_count += 1
-            if diff_count >= max_diffs_to_show:
-                break
+        print("Original Context:")
+        print(highlighted_original)
+        print("\nModified Context:")
+        print(highlighted_adversarial)
+        print("\n" + "="*80 + "\n")
+        diff_count += 1
+        if diff_count >= max_diffs_to_show:
+            break
 
 print(f"Total differences found: {diff_count}")
 if diff_count == 0:
