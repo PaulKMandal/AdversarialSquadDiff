@@ -1,0 +1,1 @@
+The purpose of this code is to check the difference between the SQuAD dataset and the adversarial examples of the SQuAD dataset. Deletions will be highlighted in red. Additions will be highlighted in green. As far as I can tell, the stanfordnlp/squad_adversarial code on HuggingFace does not work correctly.
